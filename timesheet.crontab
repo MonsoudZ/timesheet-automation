@@ -1,0 +1,5 @@
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/chacezanaty/Documents/auto_schedule_time_sheet
+
+# Run timesheet automation every weekday at 10am
+0 10 * * 1-5 /Users/chacezanaty/Documents/auto_schedule_time_sheet/run_timesheet.sh 
