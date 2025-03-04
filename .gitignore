@@ -29,4 +29,5 @@ config.enc
 save_credentials.py
 config_manager.py
 mycron
-timesheet.crontab 
+timesheet.crontab
+config.py  # Configuration file with sensitive information 

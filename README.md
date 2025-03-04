@@ -1,81 +1,88 @@
-# Unanet Timesheet Automation
+# Timesheet Automation
 
-This script automatically fills in 8 hours for the ODOS project in Unanet timesheet every day at 10 AM.
+This script automatically fills in your timesheet in Unanet every day at a specified time.
 
-## Prerequisites
+## Getting Started
 
-1. Python 3.9 or higher
-2. Chrome browser
-3. Virtual environment (`.venv` folder in the project directory)
+### 1. Clone the Repository
+```bash
+git clone https://github.com/MonsoudZ/timesheet-automation.git
+cd timesheet-automation
+```
 
-OR
+### 2. Set Up Configuration
 
-- Docker
+1. Copy the template configuration file:
+```bash
+cp config.template.py config.py
+```
 
-## Setup Instructions
+2. Edit `config.py` with your settings:
+```python
+# Your company's Unanet URL
+UNANET_URL = "https://your-company.unanet.biz/action/time"
 
-### Option 1: Local Setup
+# Your project code exactly as it appears in Unanet
+PROJECT_CODE = "YOUR.PROJECT.CODE"
 
-#### 1. Start Chrome in Debug Mode
+# Number of hours to enter (as a string)
+HOURS_TO_ENTER = "8"
+```
 
-Run Chrome with remote debugging enabled:
+**Important**: `config.py` contains sensitive information and is excluded from git. Never commit this file!
+
+### 3. Choose Your Setup Method
+
+#### Option A: Local Setup (macOS)
+
+1. Create and activate a virtual environment:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Start Chrome in Debug Mode:
 ```bash
 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
 ```
 
-#### 2. Log into Unanet
+4. Log into Unanet:
+   - In the debug Chrome instance, go to your company's Unanet URL
+   - Log in with your credentials
+   - Keep Chrome running
 
-1. Open Chrome (the debug instance)
-2. Navigate to https://amivero.unanet.biz/amivero/action/time
-3. Log in with your credentials
-4. Keep Chrome running
+5. Set up automated runs:
+   - Copy the launch agent to your LaunchAgents directory:
+   ```bash
+   cp com.chacezanaty.timesheet.plist ~/Library/LaunchAgents/
+   ```
+   - Edit the plist file to update paths to match your setup:
+   ```bash
+   nano ~/Library/LaunchAgents/com.chacezanaty.timesheet.plist
+   ```
+   - Load the launch agent:
+   ```bash
+   launchctl load ~/Library/LaunchAgents/com.chacezanaty.timesheet.plist
+   ```
 
-#### 3. Run the Script Manually
+#### Option B: Docker Setup
 
-To test the script:
-```bash
-python auto_timesheet_entry.py
-```
-
-The script will:
-1. Connect to Chrome
-2. Navigate to the timesheet
-3. Find the ODOS project row
-4. Enter 8 hours for today
-5. Save the timesheet
-
-#### 4. Automated Daily Runs
-
-The script is configured to run automatically at 10 AM every day using launchd.
-
-##### Launch Agent Status
-- Check if running: `launchctl list | grep chacezanaty`
-- View logs: 
-  ```bash
-  cat timesheet.log  # For standard output
-  cat timesheet.error.log  # For errors
-  ```
-
-##### Launch Agent Management
-- Stop automation: 
-  ```bash
-  launchctl unload ~/Library/LaunchAgents/com.chacezanaty.timesheet.plist
-  ```
-- Start automation: 
-  ```bash
-  launchctl load ~/Library/LaunchAgents/com.chacezanaty.timesheet.plist
-  ```
-
-### Option 2: Docker Setup
-
-#### 1. Build the Docker Image
-
+1. Build the Docker image:
 ```bash
 docker build -t timesheet-automation .
 ```
 
-#### 2. Run the Container
+2. Create a logs directory:
+```bash
+mkdir logs
+```
 
+3. Run the container:
 ```bash
 docker run -d \
   --name timesheet \
@@ -83,62 +90,91 @@ docker run -d \
   timesheet-automation
 ```
 
-#### 3. View Logs
+### 4. Customize for Your Needs
 
+1. Edit `auto_timesheet_entry.py`:
+   - Update the URL to your company's Unanet instance:
+   ```python
+   driver.get("https://YOUR-COMPANY.unanet.biz/action/time")
+   ```
+   - Change the project name search to your project code:
+   ```python
+   if value == "YOUR.PROJECT.CODE":
+   ```
+   - Modify default hours if needed:
+   ```python
+   input_field.send_keys("YOUR_HOURS")  # Default is "8"
+   ```
+
+2. Update the schedule:
+   - For local setup, edit the plist file's StartCalendarInterval
+   - For Docker, add `-e CRON_SCHEDULE="0 10 * * *"` to your docker run command
+
+## Testing Your Setup
+
+1. Run the script manually first:
 ```bash
-docker logs -f timesheet
+python auto_timesheet_entry.py
 ```
 
-#### 4. Stop the Container
-
+2. Check the logs:
 ```bash
-docker stop timesheet
+cat timesheet.log  # For output
+cat timesheet.error.log  # For errors
 ```
-
-## Customizing for Different Timesheets
-
-To modify this script for a different timesheet:
-
-1. Fork this repository
-2. Modify the following in `auto_timesheet_entry.py`:
-   - URL in `driver.get()`
-   - Project name in the search condition
-   - Hours value if different from 8
-3. Update the launch agent or Docker schedule as needed
-
-## File Structure
-
-- `auto_timesheet_entry.py` - Main script
-- `com.chacezanaty.timesheet.plist` - Launch agent configuration
-- `Dockerfile` - Docker configuration
-- `requirements.txt` - Python dependencies
-- `timesheet.log` - Script output log
-- `timesheet.error.log` - Error log
-
-## Important Notes
-
-1. Chrome must be running in debug mode for local setup
-2. You must be logged into Unanet
-3. The script will automatically enter 8 hours for the ODOS project
-4. Logs are saved in the project directory
-5. Docker setup handles Chrome installation automatically
 
 ## Troubleshooting
 
-1. If the script fails to connect to Chrome:
-   - For local setup: Make sure Chrome is running with `--remote-debugging-port=9222`
-   - For Docker: Check container logs for Chrome startup issues
+1. Chrome Connection Issues:
+   - Ensure Chrome is running in debug mode (port 9222)
+   - Check if you can access your Unanet instance in the debug Chrome instance
+   - Verify your network connection
 
-2. If the script can't find the ODOS row:
-   - Make sure you're logged into Unanet
-   - Check the error logs
+2. Authentication Issues:
+   - Make sure you're logged into Unanet in the debug Chrome instance
+   - Check if your session is still valid
 
-3. If the launch agent isn't running (local setup):
-   - Check the launch agent status
-   - Try unloading and loading it again
-   - Check the log files for errors
+3. Project Not Found:
+   - Verify your project code matches exactly what's in your Unanet system
+   - Check the timesheet.log for the actual project values being found
 
-4. Docker container issues:
-   - Check logs: `docker logs timesheet`
-   - Restart container: `docker restart timesheet`
-   - Rebuild image: `docker build --no-cache -t timesheet-automation .` 
+4. Docker Issues:
+   - Check container logs: `docker logs timesheet`
+   - Ensure Chrome is working in the container: `docker exec timesheet google-chrome --version`
+
+## Security Notes
+
+1. Never commit sensitive information:
+   - Credentials
+   - API keys
+   - Personal information
+   - Configuration files with sensitive data
+   - Company-specific URLs or project codes
+
+2. The script assumes you're already logged into Unanet
+   - Keep your debug Chrome instance secure
+   - Lock your computer when away
+   - Do not share your debug Chrome profile
+
+## Support
+
+If you encounter issues:
+1. Check the logs
+2. Review the Troubleshooting section
+3. Open an issue on GitHub with:
+   - Error messages
+   - Steps to reproduce
+   - Your setup details (OS, Python version, etc.)
+   - DO NOT include any sensitive company information
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Remove any sensitive information
+5. Submit a pull request
+
+## License
+
+This project is open source and available under the MIT License. 

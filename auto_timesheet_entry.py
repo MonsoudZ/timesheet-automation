@@ -6,6 +6,15 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 from datetime import datetime
 
+try:
+    from config import UNANET_URL, PROJECT_CODE, HOURS_TO_ENTER
+except ImportError:
+    print("Config file not found. Please create config.py with your settings:")
+    print("UNANET_URL = 'your-unanet-url'")
+    print("PROJECT_CODE = 'your-project-code'")
+    print("HOURS_TO_ENTER = '8'")
+    exit(1)
+
 def wait_and_find_element(driver, by, value, timeout=10):
     """Wait for an element to be present and return it."""
     return WebDriverWait(driver, timeout).until(
@@ -13,8 +22,8 @@ def wait_and_find_element(driver, by, value, timeout=10):
     )
 
 def enter_timesheet_hours(driver):
-    """Enter 8 hours for today in the ODOS project row and save."""
-    print("\nEntering 8 hours for today in ODOS row...")
+    """Enter specified hours for today in the project row and save."""
+    print(f"\nEntering {HOURS_TO_ENTER} hours for today in project row...")
     
     try:
         # Get today's date info
@@ -49,15 +58,15 @@ def enter_timesheet_hours(driver):
         # Find all project rows
         rows = timesheet.find_elements(By.XPATH, ".//tbody/tr[.//td[contains(@class, 'project')]]")
         
-        # Look for ODOS row
+        # Look for project row
         for row in rows:
             try:
                 project_cell = row.find_element(By.CSS_SELECTOR, "td.project")
                 project_input = project_cell.find_element(By.CSS_SELECTOR, "input.ui-autocomplete-input")
                 value = project_input.get_attribute("value").strip()
                 
-                if value == "SP.DHS.CIS.ODOS.OP5":
-                    print("Found ODOS row, looking for today's cell...")
+                if value == PROJECT_CODE:
+                    print("Found project row, looking for today's cell...")
                     
                     # Get all cells in this row
                     cells = row.find_elements(By.TAG_NAME, "td")
@@ -91,14 +100,14 @@ def enter_timesheet_hours(driver):
                     time.sleep(0.5)
                     input_field.clear()
                     time.sleep(0.5)
-                    input_field.send_keys("8")
+                    input_field.send_keys(HOURS_TO_ENTER)
                     time.sleep(0.5)
                     
                     # Verify entry
                     current_value = input_field.get_attribute("value").strip()
                     print(f"Current value after entry: '{current_value}'")
                     
-                    if current_value == "8":
+                    if current_value == HOURS_TO_ENTER:
                         # Save the timesheet
                         print("\nSaving timesheet...")
                         save_button = wait_and_find_element(
@@ -115,7 +124,7 @@ def enter_timesheet_hours(driver):
             except Exception as e:
                 continue
                 
-        print("Could not find ODOS row")
+        print("Could not find project row")
         return False
         
     except Exception as e:
@@ -139,7 +148,7 @@ def main():
         driver.switch_to.window(driver.window_handles[-1])
         
         print("Navigating to Unanet timesheet...")
-        driver.get("https://amivero.unanet.biz/amivero/action/time")
+        driver.get(UNANET_URL)
         
         # Wait for page load
         print("Waiting for page to load...")
