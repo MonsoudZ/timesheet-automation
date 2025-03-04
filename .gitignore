@@ -20,7 +20,13 @@ timesheet.log
 # macOS
 .DS_Store
 
-# Credentials
+# Credentials and Sensitive Files
 *.key
 *.pem
-*.env 
+*.env
+config.enc
+.salt
+save_credentials.py
+config_manager.py
+mycron
+timesheet.crontab 
